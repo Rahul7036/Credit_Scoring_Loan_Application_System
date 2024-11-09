@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      - MONGODB_URL=mongodb://admin:password123@mongodb:27017/
+      - REDIS_URL=redis://redis:6379
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
