@@ -1,48 +1,301 @@
-# Credit_Scoring_Loan_Application_SystemTask: 
-Credit Scoring and Loan Application System
-Objective:
-Create a system to calculate a "credit score" for loan applicants based on predefined criteria and process loan applications based on that score. This will involve FastAPI for backend processing, MongoDB for data storage, and HTML/CSS for a minimal user interface.
-Requirements:
-Backend (FastAPI):
-Endpoints:
-POST /register: Register new users with basic information (name, email, phone).
-POST /login: User login for authentication, using JWT for secure session management.
-POST /apply-loan: Accept loan applications with details like loan amount, tenure, and purpose.
-GET /loan-status/{loan_id}: Check the status of an application.
-GET /credit-score: Calculate a credit score for the user based on predefined criteria.
-GET /admin/all-loans: Admin-only endpoint to review all loan applications.
-POST /admin/review-loan/{loan_id}: Admin endpoint to approve/reject applications based on the credit score and other factors.
-Credit Score Calculation Logic:
-Factors to consider in the credit score calculation: income, existing loans, repayment history (you can simulate some of these for the test).
-Implement a score threshold; if the applicant’s score meets the threshold, they are eligible for review by an admin, else they are automatically marked as Rejected.
-Keep the score calculation logic modular so it can be expanded upon in the future.
-Database (MongoDB):
-Users: Store user information with fields for user role (user/admin).
-Applications: Track each loan application, including fields for status (Pending, Approved, Rejected), credit score, and applicant details.
-Logs: Keep an activity log for audit purposes, recording changes in loan application status, actions taken by admin, etc.
-Frontend (HTML/CSS):
-Pages:
-Register/Login Page: Allow users to register and log in.
-Loan Application Form: Form to apply for a loan, which displays calculated credit score dynamically.
-Status Check Page: Displays loan application status to the applicant.
-Admin Dashboard: Allows admins to view all applications, filter by status, and review credit scores.
-Performance Optimization:
-Cache the credit score calculation for each user to avoid recalculating it with every request.
-Use indexes in MongoDB on frequently queried fields (e.g., user ID, loan status).
-Security and Compliance:
-Ensure sensitive data, like credit scores and personal details, are handled securely.
-Use JWT tokens with proper expiration and role-based access for endpoint protection.
-Implement input validation to prevent SQL injection or NoSQL injection attacks.
-Documentation:
-Document API endpoints with sample requests, responses, and expected HTTP status codes.
-Add any instructions for setup, database initialization, and sample data for testing.
-Demo:
-Prepare a 10-15 minute demo showcasing the system’s functionality:
-Registering a user and logging in.
-Applying for a loan, with the credit score calculation visible to the applicant.
-Viewing loan status and admin’s ability to review and update application statuses.
-Walkthrough of API documentation for endpoints and credit score logic.
-Expected Deliverables:
-GitHub link with the code and setup instructions.
-Documentation covering API usage and assumptions made in the credit score logic.
-A brief performance analysis detailing how caching and MongoDB indexing were implemented.
+# Credit Scoring and Loan Application System
+
+A full-stack application for managing loan applications with automated credit scoring, built using FastAPI, MongoDB, Redis, and JWT authentication.
+
+## Table of Contents
+1. [Project Overview](#project-overview)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Installation Steps](#installation-steps)
+5. [API Documentation](#api-documentation)
+6. [Database Schema](#database-schema)
+7. [Security](#security)
+8. [Frontend](#frontend)
+
+## Project Overview
+
+The Credit Scoring and Loan Application System is designed to:
+- Process and manage loan applications
+- Calculate credit scores automatically
+- Provide role-based access (Admin/User)
+- Track loan application status
+- Ensure secure data handling
+
+## Features
+
+### User Features
+- User registration and authentication
+- Loan application submission
+- Real-time loan status tracking
+- Credit score visibility
+- Loan history view
+
+### Admin Features
+- Comprehensive dashboard
+- Loan application review
+- Credit score calculation
+- Application status management
+- Statistical overview
+
+## Tech Stack
+
+### Backend
+- FastAPI (Python web framework)
+- MongoDB (Database)
+- Redis (Caching)
+- JWT (Authentication)
+
+### Frontend
+- HTML/CSS
+- JavaScript
+- Jinja2 Templates
+
+### Infrastructure
+- Docker
+- Docker Compose
+
+
+## Installation Steps
+
+1. Clone the repository
+git clone <repository-url>
+
+2. Create environment file (.env)
+env
+MONGODB_URL=mongodb://admin:password123@mongodb:27017
+DB_NAME=credit_scoring_db
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+SECRET_KEY=your_secret_key_here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+3. Build and run using Docker Compose
+docker-compose up --build
+
+4. Access the application
+Frontend: http://localhost:8000
+
+## API Documentation
+
+### Authentication Endpoints
+- `POST /auth/register`
+  - Register new regular user
+  - Body: `{email, full_name, password}`
+  - Returns: User details
+
+- `POST /auth/create-admin`
+  - Create admin user
+  - Body: `{email, full_name, password}`
+  - Returns: Success message
+
+- `POST /auth/token`
+  - User login
+  - Body: Form data `{username (email), password}`
+  - Returns: JWT access token
+
+- `GET /auth/me`
+  - Get current user details
+  - Auth: Required
+  - Returns: User profile
+
+### Loan Endpoints
+- `POST /loans/apply`
+  - Submit loan application
+  - Auth: Required
+  - Body: `{amount, purpose, duration_months}`
+  - Returns: Created loan details
+
+- `GET /loans/my-loans`
+  - Get user's loan history
+  - Auth: Required
+  - Returns: List of user's loans
+
+- `GET /loans/{loan_id}`
+  - Get specific loan details
+  - Auth: Required
+  - Returns: Loan details
+
+- `GET /loans/status-history/{loan_id}`
+  - Get loan status history
+  - Auth: Required
+  - Returns: List of status changes
+
+### Admin Endpoints
+- `GET /admin/loans`
+  - List all loans
+  - Auth: Admin only
+  - Query params: status (optional)
+  - Returns: List of all loans
+
+- `PATCH /admin/loans/{loan_id}/review`
+  - Review loan application
+  - Auth: Admin only
+  - Body: `{status, notes}`
+  - Returns: Updated loan
+
+- `POST /admin/loans/{loan_id}/calculate-score`
+  - Calculate credit score
+  - Auth: Admin only
+  - Returns: Updated loan with score
+
+- `GET /admin/loans/{loan_id}/score-details`
+  - Get detailed credit score breakdown
+  - Auth: Admin only
+  - Returns: Score components and details
+
+- `GET /admin/stats`
+  - Get loan statistics
+  - Auth: Admin only
+  - Returns: Overall loan stats
+
+## Database Schema
+
+### Users Collection
+{
+    "_id": ObjectId,
+    "email": String (unique),
+    "full_name": String,
+    "hashed_password": String,
+    "created_at": DateTime,
+    "is_active": Boolean,
+    "is_admin": Boolean
+}
+
+### Loans Collection
+{
+    "_id": ObjectId,
+    "user_email": String,
+    "amount": Float,
+    "purpose": String,
+    "duration_months": Integer,
+    "status": Enum["pending", "in_review", "approved", "rejected"],
+    "credit_score": Float,
+    "created_at": DateTime,
+    "updated_at": DateTime,
+    "status_history": [
+        {
+            "status": String,
+            "changed_at": DateTime,
+            "changed_by": String,
+            "notes": String
+        }
+    ]
+}
+
+### Indexes
+The following indexes are automatically created for optimization:
+
+// Users Collection
+{ "email": 1 } (unique)
+
+// Loans Collection
+{ "email": 1 }
+{ "status": 1 }
+{ "email": 1, "status": 1 }
+
+### Relationships
+- One-to-Many relationship between Users and Loans (via user_email)
+- Each Loan document contains its complete status history
+
+### Data Types
+- ObjectId: MongoDB's unique identifier
+- String: Text fields
+- Float: Decimal numbers (for amount and credit score)
+- Integer: Whole numbers (for duration)
+- DateTime: ISO format timestamps
+- Boolean: True/False values
+- Array: For status history
+- Enum: Predefined status values
+
+### Constraints
+- User email must be unique
+- Loan status must be one of: pending, in_review, approved, rejected
+- Credit score is optional but must be between 0 and 100 when present
+- All timestamps are in UTC
+
+### Caching
+Redis is used for caching with the following implementations:
+- Admin loan listings are cached for 60 seconds
+- User authentication tokens
+- Statistical aggregations
+
+## Security
+
+### Authentication & Authorization
+- JSON Web Token (JWT) based authentication
+- Tokens expire after 30 minutes (configurable)
+- Role-based access control (User/Admin)
+- Password hashing using bcrypt with salt rounds
+
+### API Security
+- CORS (Cross-Origin Resource Sharing) protection
+- Request validation using Pydantic models
+- Input sanitization for all API endpoints
+- Secure headers implementation
+
+### Data Protection
+- Encrypted database connections
+- Environment variables for sensitive configuration
+- Secure session handling
+- MongoDB security features:
+  - Authentication required
+  - Role-based access control
+
+### Infrastructure Security
+- Docker containers with minimal base images
+- Redis password protection
+- Network isolation using Docker Compose
+
+### Secure Development Practices
+- Dependencies regularly updated
+- SQL injection prevention (using MongoDB)
+
+### API Endpoint Protection
+- All sensitive endpoints require authentication
+- Admin endpoints require admin role
+- Request size limitations
+- Validation of all input parameters
+
+## Frontend
+
+### Overview
+The frontend is built using HTML, CSS, with Jinja2 templating for server-side rendering. The application follows a responsive design pattern and provides different interfaces for users and administrators.
+
+### Templates Structure
+- base.html: Base template with common layout and navigation
+- login.html: User authentication page
+- register.html: New user registration
+- dashboard.html: User's main dashboard
+- admin_dashboard.html: Administrator interface
+- loan_application.html: Loan application form
+- loan_details.html: Detailed loan view
+
+### Features
+1. User Interface
+   - Responsive dashboard with loan statistics
+   - Interactive loan application form
+   - Loan history visualization
+
+2. Admin Interface
+   - Comprehensive loan management dashboard
+   - Statistical overview with charts
+   - Loan review system
+   - Credit score calculation interface
+
+### Styling
+- Custom CSS with responsive design
+- Status-based color coding
+- Interactive elements and animations
+- Consistent theme across pages
+
+### User Experience
+- Intuitive navigation
+- Clear error messages
+- Responsive feedback
+- Accessible design
+
+### Integration Points
+- RESTful API consumption
+- Authentication flow
