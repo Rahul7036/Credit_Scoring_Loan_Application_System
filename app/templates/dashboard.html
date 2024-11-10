@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>Welcome, <span id="userName">Loading...</span></h2>
+        <a href="/apply-loan" class="btn btn-primary">Apply for New Loan</a>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Active Loans</h3>
+            <p class="stat-number" id="activeLoanCount">-</p>
+        </div>
+        <div class="stat-card">
+            <h3>Pending Applications</h3>
+            <p class="stat-number" id="pendingLoanCount">-</p>
+        </div>
+    </div>
+
+    <div class="loan-list">
+        <h3>Your Loans</h3>
+        <div id="loansList">
+            <p>Loading loans...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadDashboardData() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        // Fetch user data
+        const userResponse = await fetch('/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const userData = await userResponse.json();
+        document.getElementById('userName').textContent = userData.full_name;
+
+        // Fetch user's loans
+        const loansResponse = await fetch('/loans/my-loans', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const loans = await loansResponse.json();
+
+        // Update stats
+        const activeLoans = loans.filter(loan => loan.status === 'approved').length;
+        const pendingLoans = loans.filter(loan => loan.status === 'pending').length;
+        
+        document.getElementById('activeLoanCount').textContent = activeLoans;
+        document.getElementById('pendingLoanCount').textContent = pendingLoans;
+
+        // Render loans list
+        const loansListHtml = loans.length > 0 
+            ? loans.map(loan => `
+                <div class="loan-card">
+                    <div class="loan-info">
+                        <h4>Loan #${loan.id}</h4>
+                        <p class="amount">Amount: $${loan.amount.toLocaleString()}</p>
+                        <p class="duration">Duration: ${loan.duration_months} months</p>
+                        <p class="purpose">Purpose: ${loan.purpose}</p>
+                    </div>
+                    <div class="loan-status status-${loan.status.toLowerCase()}">
+                        ${loan.status}
+                    </div>
+                    <a href="/loans/${loan.id}" class="btn btn-secondary">View Details</a>
+                </div>
+            `).join('')
+            : '<p>No loans found.</p>';
+
+        document.getElementById('loansList').innerHTML = loansListHtml;
+
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        alert('Failed to load dashboard data. Please try again later.');
+    }
+}
+
+// Add some CSS for loan status colors
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    .status-pending { color: #f1c40f; }
+    .status-in_review { color: #3498db; }
+    .status-approved { color: #27ae60; }
+    .status-rejected { color: #e74c3c; }
+    
+    .loan-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .loan-info {
+        margin-bottom: 1rem;
+    }
+    
+    .loan-status {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.9em;
+    }
+`;
+document.head.appendChild(styleSheet);
+
+// Load dashboard data when page loads
+document.addEventListener('DOMContentLoaded', loadDashboardData);
+</script>
+{% endblock %} 

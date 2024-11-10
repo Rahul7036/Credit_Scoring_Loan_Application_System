@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Loan - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="loan-application-container">
+    <div class="card">
+        <h2>Loan Application</h2>
+        <form class="loan-form" id="loanForm">
+            <div class="form-group">
+                <label for="amount">Loan Amount</label>
+                <input type="number" id="amount" name="amount" class="form-control" required min="1000">
+            </div>
+            <div class="form-group">
+                <label for="duration_months">Duration (Months)</label>
+                <select id="duration_months" name="duration_months" class="form-control" required>
+                    <option value="12">12 Months</option>
+                    <option value="24">24 Months</option>
+                    <option value="36">36 Months</option>
+                    <option value="48">48 Months</option>
+                    <option value="60">60 Months</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="purpose">Loan Purpose</label>
+                <select id="purpose" name="purpose" class="form-control" required>
+                    <option value="business">Business</option>
+                    <option value="education">Education</option>
+                    <option value="personal">Personal</option>
+                    <option value="home">Home Improvement</option>
+                    <option value="debt_consolidation">Debt Consolidation</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Application</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('loanForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    const formData = {
+        amount: parseFloat(document.getElementById('amount').value),
+        duration_months: parseInt(document.getElementById('duration_months').value),
+        purpose: document.getElementById('purpose').value
+    };
+
+    try {
+        const response = await fetch('/loans/apply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            alert('Loan application submitted successfully!');
+            window.location.href = '/dashboard';
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Failed to submit loan application');
+        }
+    } catch (error) {
+        alert('Failed to submit loan application');
+        console.error('Error:', error);
+    }
+});
+</script>
+{% endblock %}

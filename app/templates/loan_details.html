@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Details - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="loan-details-container">
+    <div class="back-button">
+        <a href="/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+    <div class="loan-details-card" id="loanDetails">
+        <div class="loan-header">
+            <h2>Loan Details</h2>
+            <span class="loan-id">Loading...</span>
+        </div>
+        <div class="loan-content">
+            Loading loan details...
+        </div>
+    </div>
+</div>
+
+<style>
+.loan-details-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.back-button {
+    margin-bottom: 1rem;
+}
+
+.loan-details-card {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.loan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.loan-status {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.status-pending { background-color: #fff3cd; color: #856404; }
+.status-approved { background-color: #d4edda; color: #155724; }
+.status-rejected { background-color: #f8d7da; color: #721c24; }
+.status-in_review { background-color: #cce5ff; color: #004085; }
+
+.detail-group {
+    margin-bottom: 1.5rem;
+}
+
+.detail-group label {
+    display: block;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.history-timeline {
+    margin-top: 2rem;
+    border-left: 2px solid #eee;
+    padding-left: 1.5rem;
+}
+
+.history-item {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.history-item::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border: 2px solid #1a237e;
+    border-radius: 50%;
+    position: absolute;
+    left: -2.1rem;
+    top: 0.3rem;
+}
+
+.history-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.history-notes {
+    margin-top: 0.5rem;
+    color: #666;
+}
+</style>
+
+<script>
+async function loadLoanDetails() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    // Get loan ID from URL
+    const loanId = window.location.pathname.split('/').pop();
+
+    try {
+        const response = await fetch(`/loans/${loanId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch loan details');
+        }
+
+        const loan = await response.json();
+        
+        // Format date
+        const createdDate = new Date(loan.created_at).toLocaleDateString();
+        const updatedDate = loan.updated_at ? new Date(loan.updated_at).toLocaleDateString() : 'N/A';
+
+        // Update the UI
+        document.getElementById('loanDetails').innerHTML = `
+            <div class="loan-header">
+                <h2>Loan #${loan.id}</h2>
+                <div class="loan-status status-${loan.status.toLowerCase()}">${loan.status}</div>
+            </div>
+            <div class="loan-content">
+                <div class="detail-group">
+                    <label>Amount:</label>
+                    <span>$${loan.amount.toLocaleString()}</span>
+                </div>
+                <div class="detail-group">
+                    <label>Duration:</label>
+                    <span>${loan.duration_months} months</span>
+                </div>
+                <div class="detail-group">
+                    <label>Purpose:</label>
+                    <span>${loan.purpose}</span>
+                </div>
+                <div class="detail-group">
+                    <label>Application Date:</label>
+                    <span>${createdDate}</span>
+                </div>
+                <div class="detail-group">
+                    <label>Last Updated:</label>
+                    <span>${updatedDate}</span>
+                </div>
+                ${loan.credit_score ? `
+                <div class="detail-group">
+                    <label>Credit Score:</label>
+                    <span>${loan.credit_score}</span>
+                </div>
+                ` : ''}
+
+                <div class="status-history">
+                    <h3>Status History</h3>
+                    <div class="history-timeline">
+                        ${loan.status_history.map(history => `
+                            <div class="history-item">
+                                <div class="history-date">${new Date(history.changed_at).toLocaleDateString()}</div>
+                                <div class="history-status status-${history.status.toLowerCase()}">${history.status}</div>
+                                ${history.notes ? `<div class="history-notes">${history.notes}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading loan details:', error);
+        document.getElementById('loanDetails').innerHTML = `
+            <div class="error-message">
+                Failed to load loan details. Please try again later.
+            </div>
+        `;
+    }
+}
+
+// Load loan details when page loads
+document.addEventListener('DOMContentLoaded', loadLoanDetails);
+</script>
+{% endblock %} 
