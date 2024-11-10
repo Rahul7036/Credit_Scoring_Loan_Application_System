@@ -5,80 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Credit Scoring System{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
-    <style>
-    .navbar {
-        background-color: #1a237e;  /* Deep blue background */
-        padding: 1rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .nav-brand {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-decoration: none;
-    }
-
-    .nav-links {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .nav-links a {
-        color: white;
-        text-decoration: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-    }
-
-    .nav-links a:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-links a.btn-primary {
-        background-color: #4caf50;  /* Green */
-        color: white;
-    }
-
-    .nav-links a.btn-primary:hover {
-        background-color: #45a049;
-    }
-
-    .nav-links a.btn-logout {
-        background-color: #f44336;  /* Red */
-        color: white;
-    }
-
-    .nav-links a.btn-logout:hover {
-        background-color: #d32f2f;
-    }
-    </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-brand">Credit Scoring System</div>
-        <div class="nav-links" id="navLinks">
-            <!-- Navigation links will be dynamically updated -->
+        <div class="container">
+            <div class="nav-brand">
+                <a href="/" class="nav-logo">Credit Scoring System</a>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <!-- Navigation links will be dynamically inserted here -->
+            </div>
         </div>
     </nav>
 
-    <main class="container">
+    <div class="container">
         {% block content %}{% endblock %}
-    </main>
-
-    <footer class="footer">
-        <p>&copy; 2024 Credit Scoring System</p>
-    </footer>
+    </div>
 
     <script>
     function updateNavigation() {
         const token = localStorage.getItem('access_token');
         const navLinks = document.getElementById('navLinks');
+        const currentPath = window.location.pathname;
+        
+        // Hide navigation on login and register pages
+        if (currentPath === '/login' || currentPath === '/register') {
+            navLinks.innerHTML = '';
+            return;
+        }
         
         if (token) {
             // User is logged in

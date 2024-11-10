@@ -42,9 +42,23 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             const data = await response.json();
+            console.log(data);
             // Store the token in localStorage
             localStorage.setItem('access_token', data.access_token);
             // Redirect to dashboard
+
+
+            const user = await fetch('/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Bearer ${data.access_token}`
+            },
+          });
+          const currentUser = await user.json();
+            if(currentUser.is_admin)
+            window.location.href = '/admin/dashboard';
+            else
             window.location.href = '/dashboard';
         } else {
             const error = await response.json();
