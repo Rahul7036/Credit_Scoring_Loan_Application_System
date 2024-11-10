@@ -5,7 +5,7 @@ from bson import ObjectId
 from ..models.loan import LoanCreate, Loan, LoanStatus, LoanStatusUpdate, StatusChange
 from ..dependencies.database import get_database
 from ..utils.auth import get_current_user
-
+from ..utils.credit_scoring import calculate_credit_score
 router = APIRouter(
     prefix="/loans",
     tags=["loans"]
@@ -19,21 +19,45 @@ async def apply_for_loan(
 ):
     loan_dict = loan.model_dump()
     current_time = datetime.utcnow()
-    
-    initial_status = StatusChange(
-        status=LoanStatus.PENDING,
-        changed_at=current_time,
-        changed_by=current_user["email"],
-        notes="Loan application submitted"
+
+    # Get previous loans for credit score calculation
+    previous_loans_cursor = db.loans.find({
+        "user_email": current_user["email"]
+    })
+    previous_loans = await previous_loans_cursor.to_list(length=None)
+    previous_loans = [Loan.from_mongo(l) for l in previous_loans]
+
+    # Calculate credit score immediately
+    current_loan = Loan(
+        id="_temp",  # Temporary ID for calculation
+        user_email=current_user["email"],
+        amount=loan.amount,
+        purpose=loan.purpose,
+        duration_months=loan.duration_months,
+        created_at=current_time
     )
     
-    loan_dict["user_email"] = current_user["email"]
+    credit_score = await calculate_credit_score(current_loan, previous_loans)
+    
+    # Determine initial status based on credit score
+    initial_status = (
+        LoanStatus.REJECTED if credit_score < 60 
+        else LoanStatus.PENDING
+    )
+    
+    initial_status_change = StatusChange(
+        status=initial_status,
+        changed_at=current_time,
+        changed_by=current_user["email"],
+        notes=f"Automatic {'rejection' if initial_status == LoanStatus.REJECTED else 'submission'} based on credit score: {credit_score}"
+    )
     
     loan_dict.update({
-        "status": LoanStatus.PENDING,
+        "user_email": current_user["email"],
+        "status": initial_status,
         "created_at": current_time,
-        "credit_score": None,
-        "status_history": [initial_status.model_dump()]
+        "credit_score": credit_score,
+        "status_history": [initial_status_change.model_dump()]
     })
     
     result = await db.loans.insert_one(loan_dict)

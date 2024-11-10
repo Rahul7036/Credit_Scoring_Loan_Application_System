@@ -82,9 +82,6 @@ async def calculate_credit_score(
     return round(normalized_score, 2) 
 
 async def evaluate_loan_eligibility(credit_score: float) -> str:
-    """
-    Determine if loan should be automatically rejected or sent for review
-    """
     if credit_score < CREDIT_SCORE_THRESHOLD:
         return LoanStatus.REJECTED
-    return LoanStatus.IN_REVIEW 
+    return LoanStatus.IN_REVIEW

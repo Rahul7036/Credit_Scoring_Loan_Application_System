@@ -114,40 +114,55 @@ async def get_loan_stats(
         "total_amount": sum(stat["total_amount"] for stat in stats)
     }
 
-@router.post("/loans/{loan_id}/calculate-score")
+@router.post("/loans/{loan_id}/calculate-score", response_model=Loan)
 async def calculate_loan_score(
     loan_id: str,
     current_admin: dict = Depends(get_current_admin),
     db = Depends(get_database)
 ):
-    try:
-        loan = await db.loans.find_one({"_id": ObjectId(loan_id)})
-        if not loan:
-            raise HTTPException(status_code=404, detail="Loan not found")
-
-        # Get previous loans for history calculation
+    # Get the current loan
+    loan = await db.loans.find_one({"_id": ObjectId(loan_id)})
+    if not loan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Loan not found"
+        )
+    
+    current_loan = Loan.from_mongo(loan)
+    previous_loans = []
+    
+    # Get previous loans only if email exists
+    if "email" in loan:
         previous_loans_cursor = db.loans.find({
-            "user_email": loan["user_email"],
+            "email": loan["email"],
             "_id": {"$ne": ObjectId(loan_id)}
         })
         previous_loans = await previous_loans_cursor.to_list(length=None)
-        
-        # Calculate credit score
-        current_loan = Loan.from_mongo(loan)
-        previous_loans = [Loan.from_mongo(l) for l in previous_loans]
-        credit_score = await calculate_credit_score(current_loan, previous_loans)
-        
-        # Update the loan with new credit score
-        await db.loans.update_one(
-            {"_id": ObjectId(loan_id)},
-            {"$set": {"credit_score": credit_score}}
+        previous_loans = [Loan.from_mongo(loan) for loan in previous_loans]
+    
+    # Calculate credit score
+    credit_score = await calculate_credit_score(current_loan, previous_loans)
+    
+    # Update loan with credit score
+    result = await db.loans.update_one(
+        {"_id": ObjectId(loan_id)},
+        {
+            "$set": {
+                "credit_score": credit_score,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to update credit score"
         )
-        
-        # Return success response with updated score
-        return {"message": "Credit score calculated successfully", "credit_score": credit_score}
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    # Get updated loan
+    updated_loan = await db.loans.find_one({"_id": ObjectId(loan_id)})
+    return Loan.from_mongo(updated_loan)
 
 @router.get("/loans/{loan_id}/score-details")
 async def get_loan_score_details(
