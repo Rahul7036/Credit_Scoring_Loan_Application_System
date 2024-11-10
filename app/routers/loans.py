@@ -27,8 +27,9 @@ async def apply_for_loan(
         notes="Loan application submitted"
     )
     
+    loan_dict["user_email"] = current_user["email"]
+    
     loan_dict.update({
-        "user_email": current_user["email"],
         "status": LoanStatus.PENDING,
         "created_at": current_time,
         "credit_score": None,

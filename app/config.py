@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     
     # JWT settings
-    SECRET_KEY: str = "your-secret-key"
+    SECRET_KEY: str = "secret"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     

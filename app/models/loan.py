@@ -20,6 +20,7 @@ class LoanBase(BaseModel):
     amount: float
     purpose: str
     duration_months: int
+    user_email: str
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

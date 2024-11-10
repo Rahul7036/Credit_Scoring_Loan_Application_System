@@ -35,12 +35,19 @@
         }
         
         if (token) {
-            // User is logged in
-            navLinks.innerHTML = `
-                <a href="/dashboard" class="btn-primary">Dashboard</a>
-                <a href="/apply-loan" class="btn-primary">Apply for Loan</a>
-                <a href="#" onclick="logout()" class="btn-logout">Logout</a>
-            `;
+            // Check if we're on the admin dashboard
+            if (currentPath.startsWith('/admin')) {
+                navLinks.innerHTML = `
+                    <a href="#" onclick="logout()" class="btn-logout">Logout</a>
+                `;
+            } else {
+                // Regular user navigation
+                navLinks.innerHTML = `
+                    <a href="/dashboard" class="btn-primary">Dashboard</a>
+                    <a href="/apply-loan" class="btn-primary">Apply for Loan</a>
+                    <a href="#" onclick="logout()" class="btn-logout">Logout</a>
+                `;
+            }
         } else {
             // User is not logged in
             navLinks.innerHTML = `

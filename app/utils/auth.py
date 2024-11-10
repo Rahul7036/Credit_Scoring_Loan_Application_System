@@ -7,7 +7,7 @@ from ..dependencies.database import get_database
 
 # Security configurations
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-SECRET_KEY = "your-secret-key-keep-it-secret"
+SECRET_KEY = "secret"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

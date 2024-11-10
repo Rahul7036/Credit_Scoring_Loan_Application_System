@@ -66,7 +66,7 @@ async function loadDashboardData() {
             ? loans.map(loan => `
                 <div class="loan-card">
                     <div class="loan-info">
-                        <h4>Loan #${loan.id}</h4>
+                        <h4>Loan #${loan._id}</h4>
                         <p class="amount">Amount: $${loan.amount.toLocaleString()}</p>
                         <p class="duration">Duration: ${loan.duration_months} months</p>
                         <p class="purpose">Purpose: ${loan.purpose}</p>

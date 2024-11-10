@@ -1,5 +1,5 @@
 from typing import List
-from ..models.loan import Loan
+from ..models.loan import Loan, LoanStatus
 
 CREDIT_SCORE_THRESHOLD = 60.0  # Minimum score for admin review
 

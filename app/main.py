@@ -20,7 +20,6 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Initialize templates
 templates = Jinja2Templates(directory="app/templates")
 
-# Add this before your other routes
 @app.get("/")
 async def home(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -44,7 +43,7 @@ async def login_page(request: Request):
 async def dashboard_page(request: Request):
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "user": None  # We'll handle user data in the frontend
+        "user": None 
     })
 
 @app.get("/apply-loan")
@@ -53,7 +52,6 @@ async def apply_loan_page(request: Request):
 
 @app.get("/admin/dashboard")
 async def admin_dashboard_page(request: Request):
-    # You'll need to add admin authentication here
     return templates.TemplateResponse("admin_dashboard.html", {
         "request": request,
         "stats": {"total_loans": 0, "pending_count": 0, "total_amount": 0},
