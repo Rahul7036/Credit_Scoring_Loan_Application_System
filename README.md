@@ -47,7 +47,6 @@ The Credit Scoring and Loan Application System is designed to:
 
 ### Frontend
 - HTML/CSS
-- JavaScript
 - Jinja2 Templates
 
 ### Infrastructure
