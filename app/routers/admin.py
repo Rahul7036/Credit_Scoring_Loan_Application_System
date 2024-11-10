@@ -128,16 +128,19 @@ async def calculate_loan_score(
             detail="Loan not found"
         )
     
-    # Get previous loans for this user
-    previous_loans_cursor = db.loans.find({
-        "email": loan["email"],
-        "_id": {"$ne": ObjectId(loan_id)}
-    })
-    previous_loans = await previous_loans_cursor.to_list(length=None)
-    previous_loans = [Loan.from_mongo(loan) for loan in previous_loans]
+    current_loan = Loan.from_mongo(loan)
+    previous_loans = []
+    
+    # Get previous loans only if email exists
+    if "email" in loan:
+        previous_loans_cursor = db.loans.find({
+            "email": loan["email"],
+            "_id": {"$ne": ObjectId(loan_id)}
+        })
+        previous_loans = await previous_loans_cursor.to_list(length=None)
+        previous_loans = [Loan.from_mongo(loan) for loan in previous_loans]
     
     # Calculate credit score
-    current_loan = Loan.from_mongo(loan)
     credit_score = await calculate_credit_score(current_loan, previous_loans)
     
     # Update loan with credit score
@@ -175,6 +178,19 @@ async def get_loan_score_details(
         )
     
     current_loan = Loan.from_mongo(loan)
+    
+    # Check if email exists in the loan document
+    if "email" not in loan:
+        return {
+            "amount_score": calculate_amount_score(current_loan.amount),
+            "duration_score": calculate_duration_score(current_loan.duration_months),
+            "purpose_score": calculate_purpose_score(current_loan.purpose),
+            "history_score": 0,  # No history score without email
+            "total_score": current_loan.credit_score,
+            "previous_loans_count": 0
+        }
+    
+    # Get previous loans only if email exists
     previous_loans_cursor = db.loans.find({
         "email": loan["email"],
         "_id": {"$ne": ObjectId(loan_id)}

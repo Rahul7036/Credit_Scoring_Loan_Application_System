@@ -94,7 +94,7 @@ async def get_loan_status_history(
 ):
     loan = await db.loans.find_one({
         "_id": ObjectId(loan_id),
-        "email": current_user["email"]
+        "user_email": current_user["email"]
     })
     
     if not loan:
@@ -110,7 +110,7 @@ async def get_my_loans(
     current_user: dict = Depends(get_current_user),
     db = Depends(get_database)
 ):
-    cursor = db.loans.find({"email": current_user["email"]})
+    cursor = db.loans.find({"user_email": current_user["email"]})
     loans = await cursor.to_list(length=None)
     return [Loan.from_mongo(loan) for loan in loans]
 
@@ -124,7 +124,7 @@ async def get_loan(
     
     loan = await db.loans.find_one({
         "_id": ObjectId(loan_id),
-        "email": current_user["email"]
+        "user_email": current_user["email"]
     })
     
     if not loan:
