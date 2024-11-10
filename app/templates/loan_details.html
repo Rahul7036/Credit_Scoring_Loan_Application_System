@@ -11,7 +11,7 @@
     <div class="loan-details-card" id="loanDetails">
         <div class="loan-header">
             <h2>Loan Details</h2>
-            <span class="loan-id">Loading...</span>
+            <div id="loanStatus" class="loan-status"></div>
         </div>
         <div class="loan-content">
             Loading loan details...
@@ -24,10 +24,6 @@
     max-width: 800px;
     margin: 2rem auto;
     padding: 0 1rem;
-}
-
-.back-button {
-    margin-bottom: 1rem;
 }
 
 .loan-details-card {
@@ -62,43 +58,14 @@
 }
 
 .detail-group label {
-    display: block;
     font-weight: bold;
     color: #666;
     margin-bottom: 0.5rem;
+    display: block;
 }
 
-.history-timeline {
-    margin-top: 2rem;
-    border-left: 2px solid #eee;
-    padding-left: 1.5rem;
-}
-
-.history-item {
-    margin-bottom: 1.5rem;
-    position: relative;
-}
-
-.history-item::before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    background: #fff;
-    border: 2px solid #1a237e;
-    border-radius: 50%;
-    position: absolute;
-    left: -2.1rem;
-    top: 0.3rem;
-}
-
-.history-date {
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.history-notes {
-    margin-top: 0.5rem;
-    color: #666;
+.back-button {
+    margin-bottom: 1rem;
 }
 </style>
 
@@ -111,7 +78,17 @@ async function loadLoanDetails() {
     }
 
     // Get loan ID from URL
-    const loanId = window.location.pathname.split('/').pop();
+    const pathParts = window.location.pathname.split('/');
+    const loanId = pathParts[pathParts.length - 1];
+
+    if (!loanId || loanId === 'undefined') {
+        document.getElementById('loanDetails').innerHTML = `
+            <div class="error-message">
+                Invalid loan ID. Please go back and try again.
+            </div>
+        `;
+        return;
+    }
 
     try {
         const response = await fetch(`/loans/${loanId}`, {
@@ -119,51 +96,52 @@ async function loadLoanDetails() {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         if (!response.ok) {
             throw new Error('Failed to fetch loan details');
         }
 
         const loan = await response.json();
         
-        // Format date
+        // Format dates
         const createdDate = new Date(loan.created_at).toLocaleDateString();
         const updatedDate = loan.updated_at ? new Date(loan.updated_at).toLocaleDateString() : 'N/A';
 
         // Update the UI
         document.getElementById('loanDetails').innerHTML = `
             <div class="loan-header">
-                <h2>Loan #${loan.id}</h2>
+                <h2>Loan #${loan._id}</h2>
                 <div class="loan-status status-${loan.status.toLowerCase()}">${loan.status}</div>
             </div>
             <div class="loan-content">
                 <div class="detail-group">
-                    <label>Amount:</label>
+                    <label>Amount</label>
                     <span>$${loan.amount.toLocaleString()}</span>
                 </div>
                 <div class="detail-group">
-                    <label>Duration:</label>
+                    <label>Duration</label>
                     <span>${loan.duration_months} months</span>
                 </div>
                 <div class="detail-group">
-                    <label>Purpose:</label>
+                    <label>Purpose</label>
                     <span>${loan.purpose}</span>
                 </div>
                 <div class="detail-group">
-                    <label>Application Date:</label>
+                    <label>Application Date</label>
                     <span>${createdDate}</span>
                 </div>
                 <div class="detail-group">
-                    <label>Last Updated:</label>
+                    <label>Last Updated</label>
                     <span>${updatedDate}</span>
                 </div>
                 ${loan.credit_score ? `
                 <div class="detail-group">
-                    <label>Credit Score:</label>
+                    <label>Credit Score</label>
                     <span>${loan.credit_score}</span>
                 </div>
                 ` : ''}
-
+                
+                ${loan.status_history && loan.status_history.length > 0 ? `
                 <div class="status-history">
                     <h3>Status History</h3>
                     <div class="history-timeline">
@@ -176,10 +154,11 @@ async function loadLoanDetails() {
                         `).join('')}
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
     } catch (error) {
-        console.error('Error loading loan details:', error);
+        console.error('Error:', error);
         document.getElementById('loanDetails').innerHTML = `
             <div class="error-message">
                 Failed to load loan details. Please try again later.

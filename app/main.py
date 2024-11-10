@@ -53,6 +53,13 @@ async def admin_dashboard_page(request: Request):
         "loans": []
     })
 
+@app.get("/loan/view/{loan_id}")
+async def loan_details_page(request: Request, loan_id: str):
+    return templates.TemplateResponse("loan_details.html", {
+        "request": request,
+        "loan_id": loan_id
+    })
+
 @app.on_event("startup")
 async def startup_db_client():
     # Initialize MongoDB

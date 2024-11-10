@@ -74,7 +74,7 @@ async function loadDashboardData() {
                     <div class="loan-status status-${loan.status.toLowerCase()}">
                         ${loan.status}
                     </div>
-                    <a href="/loans/${loan.id}" class="btn btn-secondary">View Details</a>
+                    <a href="/loan/view/${loan._id}" class="btn btn-secondary">View Details</a>
                 </div>
             `).join('')
             : '<p>No loans found.</p>';
